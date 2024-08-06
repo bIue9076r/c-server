@@ -1,6 +1,8 @@
+#include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
+#include <signal.h>
+#include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
@@ -19,13 +21,18 @@
 char request[REQUEST_LEN];
 char* response;
 
+char* handleRequest(char req[REQUEST_LEN]){
+	SLOG(req);
+	response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE html><html><head><title>Title</title></head><body><h1>Hello World</h1><script src=\"/main.js\"></script></body></html>\r\n";
+	return response;
+}
+
 int main(void){
 	struct sockaddr_in addr;
 	int addr_len = sizeof(addr);
-	
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = INADDR_ANY;
-	addr.sin_port = htons(1234);
+	addr.sin_port = htons(PORT);
 	
 	int fd = socket(AF_INET,SOCK_STREAM,0);
 	IF_FF_E(fd, "Socket Fail")
@@ -36,15 +43,22 @@ int main(void){
 	
 	SLOG("Hellow From BIue Server");
 	SLOG_N("Port",PORT);
-	int soc = accept(fd,(struct sockaddr*)&addr,(socklen_t*)&addr_len);
-	IF_FF_E(soc, "Accept Fail")
+	while(1){
+		int soc = accept(fd,(struct sockaddr*)&addr,(socklen_t*)&addr_len);
+		if(soc == -1){
+			perror("Accept Fail");
+			continue;
+		}
+		
+		read(soc, request, REQUEST_LEN);
+		request[REQUEST_LEN - 1] = 0;
+		
+		handleRequest(request);
+		
+		send(soc, response, strlen(response), 0);
+		close(soc);
+	}
 	
-	read(soc, request, REQUEST_LEN);
-	request[REQUEST_LEN - 1] = 0;
-	response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE html><html><head><title>Title</title></head><body><h1>Hello World</h1></body></html>\r\n";
-	send(soc, response, strlen(response), 0);
-	
-	close(soc);
 	close(fd);
 	return 0;
 }
