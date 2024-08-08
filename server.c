@@ -14,10 +14,11 @@
 #define SLOG(m) printf("[Server]: %s\n",m)
 #define SLOG_N(m,n) printf("[Server]: %s: %d\n",m,n)
 
-#define NOTFOUND() response = "HTTP/1.1 404 NOTOK\r\n"
-
 #define REQUEST_LEN 1024
 #define PORT 1234
+
+#define PATH "."
+//"./public"
 
 unsigned int stl(char* s){
 	unsigned int l = 1;
@@ -56,25 +57,129 @@ char* cat(char* s1, char* s2){
 	return r;
 }
 
+int fexist(char* p){
+	FILE* f = fopen(p,"r");
+	if(f == NULL){
+		return 0;
+	}
+	
+	fclose(f);
+	return 1;
+}
+
+typedef struct urlarg_s{
+	char* key;
+	char* value;
+} urlarg;
+
+typedef struct url_s{
+	char* path;
+	char* handle;
+	unsigned int arglen;
+	urlarg* args;
+} url_t;
+
+urlarg* parse_arg(char* args, unsigned int* len){
+	
+}
+
+url_t parse_url(char* u){
+	// "/file.html?v=1&b=2"
+	char* path = "";
+	char* handle = "";
+	char* args = "";
+	
+	char* pu = u;
+	while((*pu != '.') && (*pu != 0)){
+		char t[2] = {*(pu++), 0};
+		path = cat(path,t);
+	}
+	if(*pu == 0){
+		url_t url;
+		url.path = path;
+		url.handle = NULL;
+		url.arglen = 0;
+		url.args = NULL;
+		return url;
+	}
+	
+	char* hu = ++pu;
+	while((*hu != '?') && (*hu != 0)){
+		char t[2] = {*(hu++), 0};
+		handle = cat(handle,t);
+	}
+	if(*hu == 0){
+		url_t url;
+		url.path = path;
+		url.handle = handle;
+		url.arglen = 0;
+		url.args = NULL;
+		return url;
+	}
+	
+	char* au = ++hu;
+	while(*au != 0){
+		char t[2] = {*(au++), 0};
+		args = cat(args,t);
+	}
+	
+	url_t url;
+	url.path = path;
+	url.handle = handle;
+	url.args = parse_arg(args,&url.arglen);
+	return url;
+}
+
 char request[REQUEST_LEN];
 char* response;
-
-void GET(char* p){
-	response = "HTTP/1.1 200 OK\r\n";
-	response = cat(response,"Content-Type: text/html\r\n\r\n");
-	response = cat(response,"<!DOCTYPE html><html><head><title>Title</title></head><body><h1>Hello World</h1><script src=\"/main.js\"></script></body></html>\r\n");
-}
-
-void POST(char* p, char* b){
-	response = "HTTP/1.1 200 OK\r\n";
-	response = cat(response,"Content-Type: text/html\r\n\r\n");
-	response = cat(response,"<!DOCTYPE html><html><head><title>Title</title></head><body><h1>Hello World</h1><script src=\"/main.js\"></script></body></html>\r\n");
-}
 
 void E400(void){
 	response = "HTTP/1.1 400 WHAT\r\n";
 	response = cat(response,"Content-Type: text/html\r\n\r\n");
-	response = cat(response,"<!DOCTYPE html><html><head><title>400 Error</title></head><body><h1>400 Error</h1></body></html>\r\n");
+	response = cat(response,"400: Error\r\n");
+}
+
+void E404(void){
+	response = "HTTP/1.1 404 NOTFOUND\r\n";
+	response = cat(response,"Content-Type: text/html\r\n\r\n");
+	response = cat(response,"404: Not found\r\n");
+}
+
+void GET(char* p){
+	if(strequ(p,"/") == 0){
+		p = cat(p,"index.html");
+	}
+	
+	char* real_path = cat(PATH,p);
+	
+	if(!fexist(real_path)){
+		return E404();
+	}
+	
+	FILE* file = fopen(real_path,"r");
+	if(file == NULL){
+		return E400();
+	}
+	
+	char* file_content = "";
+	while(!feof(file)){
+		char chr = fgetc(file);
+		if(chr != 0xFF){
+			char chrs[2] = {chr,0};
+			file_content = cat(file_content,chrs);
+		}
+	}
+	
+	response = "HTTP/1.1 200 OK\r\n";
+	response = cat(response,"Content-Type: text/html\r\n\r\n");
+	response = cat(response,file_content);
+	response = cat(response,"\r\n");
+}
+
+void POST(char* p, char* b){
+	response = "HTTP/1.1 200 OK\r\n";
+	response = cat(response,"Content-Type: text/text\r\n\r\n");
+	response = cat(response,"Goodbye World\r\n");
 }
 
 void clearRequest(char req[REQUEST_LEN]){
@@ -85,7 +190,7 @@ void clearRequest(char req[REQUEST_LEN]){
 
 char* handleRequest(char req[REQUEST_LEN]){
 	char* rq = req;
-	int len = stl(req);
+	int rq_len = stl(req);
 	
 	char* r = "";
 	char* p = "";
@@ -96,33 +201,31 @@ char* handleRequest(char req[REQUEST_LEN]){
 		return response;
 	}
 	
-	while((*(rq++) != ' ') && ((--len) != 0)){
+	while((*(rq++) != ' ') && ((--rq_len) != 0)){
 		char c[2] = {*(rq - 1),0};
 		r = cat(r, c);
 	}
 	
-	while((*(rq++) != ' ') && ((--len) != 0)){
+	while((*(rq++) != ' ') && ((--rq_len) != 0)){
 		char c[2] = {*(rq - 1),0};
 		p = cat(p, c);
 	}
 	
 	char check[5];
-	if(len - 2 > 0){
+	if(rq_len - 2 > 0){
 		check[4] = 0;
 		check[0] = *(rq); check[1] = *(rq + 1);
 		check[2] = *(rq + 2); check[3] = *(rq + 3);
 		rq++;
-		len--;
-		while(
-		(strequ(check,"\r\n\r\n") != 0) && (len - 4 > 0)
-		){
+		rq_len--;
+		while((strequ(check,"\r\n\r\n") != 0) && (rq_len - 4 > 0)){
 			check[0] = *(rq); check[1] = *(rq + 1);
 			check[2] = *(rq + 2); check[3] = *(rq + 3);
 			rq++;
-			len--;
+			rq_len--;
 		}
 		if(strequ(check,"\r\n\r\n") == 0){
-			len -= 3;
+			rq_len -= 3;
 			rq += 3;
 		}
 	}
