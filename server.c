@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 
 #define IF_00(n) if(n == 0){return 1;}
@@ -17,8 +18,9 @@
 #define REQUEST_LEN 1024
 #define PORT 1234
 
-#define PATH "."
-//"./public"
+#define COMPATH(f,h) cat(f,cat(".",h))
+
+#define PATH "./public"
 
 unsigned int stl(char* s){
 	unsigned int l = 1;
@@ -67,10 +69,35 @@ int fexist(char* p){
 	return 1;
 }
 
+int dexist(char* p){
+	struct stat s;
+	if(stat(p, &s) == 0){
+		if((s.st_mode & S_IFMT) == S_IFDIR){
+			return 1;
+		}
+	}
+	return 0;
+}
+
 typedef struct urlarg_s{
 	char* key;
 	char* value;
 } urlarg;
+
+urlarg* cat_urlarg(urlarg* us, unsigned int* len, urlarg u){
+	int l = *len;
+	
+	urlarg* r = (urlarg*)malloc(sizeof(urlarg) * (l + 1));
+	for(int i = 0; i < l; i++){
+		r[i].key = us[i].key;
+		r[i].value = us[i].value;
+	}
+	
+	r[l].key = u.key;
+	r[l].value = u.value;
+	
+	return r;
+}
 
 typedef struct url_s{
 	char* path;
@@ -79,8 +106,45 @@ typedef struct url_s{
 	urlarg* args;
 } url_t;
 
-urlarg* parse_arg(char* args, unsigned int* len){
+urlarg* parse_arg(char* args, unsigned int* len, urlarg** us){
+	urlarg uarg;
+	uarg.key = "";
+	uarg.value = "";
 	
+	while((*args != '=') && (*args != 0)){
+		char t[2] = {*(args++), 0};
+		uarg.key = cat(uarg.key,t);
+	}
+	if(*args == 0){
+		if(us == NULL){
+			return NULL;
+		}
+		return *us;
+	}
+	
+	++args;
+	
+	while((*args != '&') && (*args != 0)){
+		char t[2] = {*(args++), 0};
+		uarg.value = cat(uarg.value,t);
+	}
+	if(*args == 0){
+		if(us == NULL){
+			return NULL;
+		}
+		return *us;
+	}
+	
+	++args;
+	
+	if(us == NULL){
+		urlarg* t = cat_urlarg(NULL,len,uarg);
+		us = &t;
+	}else{
+		*us = cat_urlarg(*us,len,uarg);
+	}
+	(*len)++;
+	return parse_arg(args,len,us);
 }
 
 url_t parse_url(char* u){
@@ -97,7 +161,7 @@ url_t parse_url(char* u){
 	if(*pu == 0){
 		url_t url;
 		url.path = path;
-		url.handle = NULL;
+		url.handle = "";
 		url.arglen = 0;
 		url.args = NULL;
 		return url;
@@ -126,7 +190,9 @@ url_t parse_url(char* u){
 	url_t url;
 	url.path = path;
 	url.handle = handle;
-	url.args = parse_arg(args,&url.arglen);
+	url.arglen = 0;
+	url.args = NULL;
+	url.args = parse_arg(args,&url.arglen,NULL);
 	return url;
 }
 
@@ -145,12 +211,15 @@ void E404(void){
 	response = cat(response,"404: Not found\r\n");
 }
 
-void GET(char* p){
-	if(strequ(p,"/") == 0){
-		p = cat(p,"index.html");
-	}
+void GET(url_t url){
+	int dir = 0;
+	char* real_path = cat(PATH,COMPATH(url.path, url.handle));
 	
-	char* real_path = cat(PATH,p);
+	if(dexist(COMPATH(url.path, url.handle))){
+		url.path = cat(cat(url.path, url.handle),"index.html");
+		real_path = cat(PATH,url.path);
+		dir = 1;
+	}
 	
 	if(!fexist(real_path)){
 		return E404();
@@ -171,15 +240,19 @@ void GET(char* p){
 	}
 	
 	response = "HTTP/1.1 200 OK\r\n";
-	response = cat(response,"Content-Type: text/html\r\n\r\n");
+	
+	// TODO: check for handle
+	response = cat(response,"Content-Type: text/");
+	response = (dir)?(cat(response,"html")):(cat(response,url.handle));
+	
+	response = cat(response,"\r\n\r\n");
 	response = cat(response,file_content);
-	response = cat(response,"\r\n");
 }
 
-void POST(char* p, char* b){
+void POST(url_t url, char* b){
 	response = "HTTP/1.1 200 OK\r\n";
 	response = cat(response,"Content-Type: text/text\r\n\r\n");
-	response = cat(response,"Goodbye World\r\n");
+	response = cat(response,"Goodbye World");
 }
 
 void clearRequest(char req[REQUEST_LEN]){
@@ -236,12 +309,12 @@ char* handleRequest(char req[REQUEST_LEN]){
 	
 	switch(stn(r)){
 		case 225:
-			GET(p);
+			GET(parse_url(p));
 			return response;
 		break;
 		
 		case 327:
-			POST(p,b);
+			POST(parse_url(p),b);
 			return response;
 		break;
 		
@@ -281,7 +354,7 @@ int main(void){
 		
 		handleRequest(request);
 		
-		send(soc, response, stl(response), 0);
+		send(soc, response, stl(response) - 1, 0);
 		close(soc);
 	}
 	
