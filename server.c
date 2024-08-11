@@ -20,6 +20,15 @@
 
 #define COMPATH(f,h) cat(f,cat(".",h))
 
+#define GET_REQUEST 225
+#define POST_REQUEST 327
+#define PNG_HANDLE 326
+#define JPG_HANDLE 322
+#define JPEG_HANDLE 423
+#define MP4_HANDLE 274
+#define HTML_HANDLE 438
+#define JS_HANDLE 222
+#define CSS_HANDLE 335
 #define PATH "./public"
 
 unsigned int stl(char* s){
@@ -242,8 +251,40 @@ void GET(url_t url){
 	response = "HTTP/1.1 200 OK\r\n";
 	
 	// TODO: check for handle
-	response = cat(response,"Content-Type: text/");
-	response = (dir)?(cat(response,"html")):(cat(response,url.handle));
+	switch(stn(url.handle)){
+		case PNG_HANDLE:
+		response = cat(response,"Content-Type: image/png");
+		break;
+		
+		case JPG_HANDLE:
+		response = cat(response,"Content-Type: image/jpg");
+		break;
+		
+		case JPEG_HANDLE:
+		response = cat(response,"Content-Type: image/jpeg");
+		break;
+		
+		case MP4_HANDLE:
+		response = cat(response,"Content-Type: video/mp4");
+		break;
+		
+		case HTML_HANDLE:
+		response = cat(response,"Content-Type: text/html");
+		break;
+		
+		case JS_HANDLE:
+		response = cat(response,"Content-Type: text/js");
+		break;
+		
+		case CSS_HANDLE:
+		response = cat(response,"Content-Type: text/css");
+		break;
+		
+		default:
+		response = cat(response,"Content-Type: text/");
+		response = (dir)?(cat(response,"html")):(cat(response,url.handle));
+		break;
+	}
 	
 	response = cat(response,"\r\n\r\n");
 	response = cat(response,file_content);
@@ -308,12 +349,12 @@ char* handleRequest(char req[REQUEST_LEN]){
 	printf("[Server]: [Request]: [%s], [%s], [%s]\n",r,p,b);
 	
 	switch(stn(r)){
-		case 225:
+		case GET_REQUEST:
 			GET(parse_url(p));
 			return response;
 		break;
 		
-		case 327:
+		case POST_REQUEST:
 			POST(parse_url(p),b);
 			return response;
 		break;
