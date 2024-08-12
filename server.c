@@ -68,6 +68,53 @@ char* cat(char* s1, char* s2){
 	return r;
 }
 
+char* cap(char* s, char c){
+	int l1 = stl(s);
+	
+	char* r = (char*)malloc(sizeof(char) * (l1 + 1));
+	for(int i = 0; i < l1; i++){
+		r[i] = s[i];
+	}
+	
+	r[l1 - 1] = c;
+	r[l1] = 0;
+	
+	return r;
+}
+
+char* catn(char* s1, unsigned int* n1, char* s2, unsigned int* n2){
+	int l1 = *n1;
+	int l2 = *n2;
+	
+	char* r = (char*)malloc(sizeof(char) * (l1 + l2 - 1));
+	for(int i = 0; i < l1; i++){
+		r[i] = s1[i];
+	}
+	for(int i = 0; i < l2; i++){
+		r[(l1 - 1) + i] = s2[i];
+	}
+	
+	r[(l1 + l2) - 2] = 0;
+	
+	*n1 = (l1 + l2 - 1);
+	return r;
+}
+
+char* capn(char* s, unsigned int *n, char c){
+	int l1 = *n;
+	
+	char* r = (char*)malloc(sizeof(char) * (l1 + 1));
+	for(int i = 0; i < l1; i++){
+		r[i] = s[i];
+	}
+	
+	r[l1 - 1] = c;
+	r[l1] = 0;
+	
+	*n = l1 + 1;
+	return r;
+}
+
 int fexist(char* p){
 	FILE* f = fopen(p,"r");
 	if(f == NULL){
@@ -240,11 +287,12 @@ void GET(url_t url){
 	}
 	
 	char* file_content = "";
+	unsigned int file_content_len = 1;
 	while(!feof(file)){
-		char chr = fgetc(file);
-		if(chr != 0xFF){
-			char chrs[2] = {chr,0};
-			file_content = cat(file_content,chrs);
+		char chr = 0;
+		fread(&chr, sizeof(char), 1, file);
+		if(!feof(file)){
+			file_content = capn(file_content,&file_content_len,chr);
 		}
 	}
 	
@@ -287,7 +335,10 @@ void GET(url_t url){
 	}
 	
 	response = cat(response,"\r\n\r\n");
-	response = cat(response,file_content);
+	
+	unsigned int response_len = stl(response);
+	response = catn(response,&response_len,file_content,&file_content_len);
+	//response = cat(response,file_content);
 }
 
 void POST(url_t url, char* b){
