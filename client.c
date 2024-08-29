@@ -168,6 +168,19 @@ char* capn(char* s, unsigned int *n, char c){
 }
 
 int main(void){
+	struct sockaddr_in addr;
+	int addr_len = sizeof(addr);
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = INADDR_ANY;
+	addr.sin_port = htons(PORT);
+	
+	int fd = socket(AF_INET,SOCK_STREAM,0);
+	IF_FF_E(fd, "Socket Fail")
+	
+	IF_FF_E(bind(fd,(struct sockaddr*)&addr,sizeof(addr)), "Bind Fail")
+	
+	IF_FF_E(listen(fd, 3), "Listen Fail")
+	
 	SLOG("Hellow To BIue Server");
 	SLOG_N("Port",PORT);
 	return 0;
