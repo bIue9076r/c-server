@@ -167,6 +167,10 @@ char* capn(char* s, unsigned int *n, char c){
 	return r;
 }
 
+#define RESPONSE_LEN 0xFFFF
+char* request;
+char response[RESPONSE_LEN];
+
 int main(void){
 	struct sockaddr_in addr;
 	int addr_len = sizeof(addr);
@@ -183,5 +187,20 @@ int main(void){
 	
 	SLOG("Hellow To BIue Server");
 	SLOG_N("Port",PORT);
+	while(1){
+		int soc = accept(fd,(struct sockaddr*)&addr,(socklen_t*)&addr_len);
+		if(soc == -1){
+			perror("Accept Fail");
+			continue;
+		}
+		
+		request = "GET /";
+		send(soc, request, stl(request) - 1, 0);
+		read(soc, response, RESPONSE_LEN);
+		response[RESPONSE_LEN - 1] = 0;
+
+		close(soc);
+	}
+	close(fd);
 	return 0;
 }
