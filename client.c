@@ -181,8 +181,7 @@ int main(void){
 	int fd = socket(AF_INET,SOCK_STREAM,0);
 	IF_FF_E(fd, "Socket Fail")
 	
-	IF_FF_E(bind(fd,(struct sockaddr*)&addr,sizeof(addr)), "Bind Fail")
-	
+	/*IF_FF_E(bind(fd,(struct sockaddr*)&addr,sizeof(addr)), "Bind Fail")*/	
 	IF_FF_E(listen(fd, 3), "Listen Fail")
 	
 	SLOG("Hellow To BIue Server");
@@ -195,6 +194,7 @@ int main(void){
 		}
 		
 		request = "GET /";
+		printf("%s\n",request);
 		send(soc, request, stl(request) - 1, 0);
 		read(soc, response, RESPONSE_LEN);
 		response[RESPONSE_LEN - 1] = 0;
