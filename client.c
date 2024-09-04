@@ -32,7 +32,7 @@
 #define SLOG_N(m,n) printf("[Client]: %s: %d\n",m,n)
 
 #define REQUEST_LEN 1024
-#define PORT 1234
+#define PORT 4321
 
 #define COMPATH(f,h) cat(f,cat(".",h))
 

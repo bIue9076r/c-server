@@ -1,3 +1,6 @@
+all: server client
+	@echo "All Done"
+
 server: server.c
 	@cc server.c -o server.out
 
