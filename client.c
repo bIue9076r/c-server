@@ -178,6 +178,7 @@ int main(void){
 	addr.sin_addr.s_addr = INADDR_ANY;
 	addr.sin_port = htons(PORT);
 	
+	/*
 	int fd = socket(AF_INET,SOCK_STREAM,0);
 	IF_FF_E(fd, "Socket Fail")
 	
@@ -202,5 +203,6 @@ int main(void){
 		close(soc);
 	}
 	close(fd);
+	*/
 	return 0;
 }
