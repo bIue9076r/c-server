@@ -178,19 +178,15 @@ int main(void){
 	addr.sin_addr.s_addr = INADDR_ANY;
 	addr.sin_port = htons(PORT);
 	
-	/*
 	int fd = socket(AF_INET,SOCK_STREAM,0);
 	IF_FF_E(fd, "Socket Fail")
-	
-	/*IF_FF_E(bind(fd,(struct sockaddr*)&addr,sizeof(addr)), "Bind Fail")*/	
-	IF_FF_E(listen(fd, 3), "Listen Fail")
 	
 	SLOG("Hellow To BIue Server");
 	SLOG_N("Port",PORT);
 	while(1){
-		int soc = accept(fd,(struct sockaddr*)&addr,(socklen_t*)&addr_len);
+		int soc = connect(fd,(struct sockaddr*)&addr,(socklen_t*)&addr_len);
 		if(soc == -1){
-			perror("Accept Fail");
+			perror("Connect Fail");
 			continue;
 		}
 		
@@ -203,6 +199,5 @@ int main(void){
 		close(soc);
 	}
 	close(fd);
-	*/
 	return 0;
 }
