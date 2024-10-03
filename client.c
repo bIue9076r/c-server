@@ -184,15 +184,15 @@ int main(void){
 	SLOG("Hellow To BIue Server");
 	SLOG_N("Port",PORT);
 	while(1){
-		printf("Attemt to Connect\n");
-		int soc = connect(fd,(struct sockaddr*)&addr,(socklen_t*)&addr_len);
+		SLOG("Attemt to Connect\n");
+		int soc = connect(fd,(struct sockaddr*)&addr,addr_len);
 		if(soc == -1){
 			perror("Connect Fail");
 			continue;
 		}
 		
 		request = "GET /";
-		printf("%s\n",request);
+		SLOG(request);
 		send(soc, request, stl(request) - 1, 0);
 		read(soc, response, RESPONSE_LEN);
 		response[RESPONSE_LEN - 1] = 0;
