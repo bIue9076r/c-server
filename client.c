@@ -184,7 +184,6 @@ int main(void){
 	SLOG("Hellow To BIue Server");
 	SLOG_N("Port",PORT);
 	while(1){
-		SLOG("Attemt to Connect\n");
 		int soc = connect(fd,(struct sockaddr*)&addr,addr_len);
 		if(soc == -1){
 			perror("Connect Fail");
