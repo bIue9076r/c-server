@@ -183,6 +183,7 @@ int main(void){
 	
 	SLOG("Hellow To BIue Server");
 	SLOG_N("Port",PORT);
+	
 	while(1){
 		int soc = connect(fd,(struct sockaddr*)&addr,addr_len);
 		if(soc == -1){
@@ -190,7 +191,7 @@ int main(void){
 			continue;
 		}
 		
-		request = "GET /";
+		request = "";//"GET /";
 		SLOG(request);
 		send(soc, request, stl(request) - 1, 0);
 		read(soc, response, RESPONSE_LEN);
