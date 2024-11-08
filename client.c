@@ -6,6 +6,9 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 
+#include "lib.h"
+#include "lib.c"
+
 char* request;
 char response[RESPONSE_LEN];
 

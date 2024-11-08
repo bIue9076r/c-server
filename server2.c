@@ -5,8 +5,13 @@
 #include <arpa/inet.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+// Server code
 
-#define PORT 1234
+#include "lib.h"
+#include "lib.c"
+
+char request[REQUEST_LEN];
+char* response;
 
 int main(void){
 	return 0;
