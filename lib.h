@@ -1,5 +1,12 @@
 #ifndef _LIB_H
 #define _LIB_H
+#include <stdlib.h>
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
 
 #define C10e0 1
 #define C10e1 10

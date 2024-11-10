@@ -8,7 +8,6 @@
 // Server code
 
 #include "lib.h"
-#include "lib.c"
 
 char request[REQUEST_LEN];
 char* response;
